@@ -140,7 +140,7 @@ All secured endpoints require a standard Bearer Token in the headers:
 ### 7. Extract Text from PDF/Image
 Extract raw text from an image (JPG/PNG) or document (PDF).
 - **Endpoint:** `POST /ocr/extract`
-- **Access:** Private (Needs Token)
+- **Access:** Public or Private (Token is optional)
 - **Headers:** `Content-Type: multipart/form-data`
 - **Form Data:** Key must be `file`
 - **Response (200):** `{ "success": true, "text": "Extracted text..." }`
@@ -148,7 +148,7 @@ Extract raw text from an image (JPG/PNG) or document (PDF).
 ### 8. Analyze Document with AI
 Extract text from a file and immediately feed it to the AI for legal analysis.
 - **Endpoint:** `POST /ocr/analyze`
-- **Access:** Private (Needs Token)
+- **Access:** Public or Private (Token is optional)
 - **Headers:** `Content-Type: multipart/form-data`
 - **Form Data:** Key must be `file`
 - **Response (200):**
