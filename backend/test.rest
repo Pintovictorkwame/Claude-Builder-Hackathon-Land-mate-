@@ -90,6 +90,6 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "message": "who is allowed to vote in Ghana? explain it to me like i am a five year old.",
+  "message": "hello.",
   "sessionId": "replace_with_valid_session_id_if_continuing_chat"
 }
