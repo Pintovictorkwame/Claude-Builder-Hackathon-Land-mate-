@@ -1,18 +1,18 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { chat, getChatHistory } = require('../controllers/chatController');
-const { protect } = require('../middleware/auth');
+const { chat, getChatSessions, getChatHistory } = require('../controllers/chatController');
+const { protect, optionalProtect } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Validation middleware
 const chatValidation = [
-  body('message', 'Message is required').not().isEmpty(),
+  body('message').notEmpty().withMessage('Message is required')
 ];
 
-// All chat routes are protected
-router.use(protect);
-
-router.get('/history', getChatHistory);
-router.post('/', chatValidation, chat);
+// Routes
+router.get('/sessions', protect, getChatSessions);       // Private
+router.get('/history/:sessionId', protect, getChatHistory); // Private
+router.post('/', optionalProtect, chatValidation, chat); // Public or Private
 
 module.exports = router;

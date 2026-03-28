@@ -15,7 +15,7 @@ const chat = async (req, res, next) => {
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { message } = req.body;
+    const { message, sessionId } = req.body;
     const mode = req.query.mode || 'legal'; // 'simple' or 'legal'
 
     // 1. Query MongoDB Vector Search for top 3 relevant documents
@@ -29,29 +29,67 @@ const chat = async (req, res, next) => {
     // 3. Send message + context + mode to Nvidia via OpenRouter
     const responseFormat = await openRouterService.sendMessageToOpenRouter(message, dynamicContext, mode);
 
-    // 4. Save conversation to Chat model
-    let chatSession = await Chat.findOne({ user: req.user._id });
-    if (!chatSession) {
-      chatSession = new Chat({ user: req.user._id, messages: [] });
+    // 4. Save conversation to Chat model only if user is logged in
+    let currentSessionId = null;
+
+    if (req.user) {
+      let chatSession;
+
+      if (sessionId) {
+        // Find existing session
+        chatSession = await Chat.findOne({ _id: sessionId, user: req.user._id });
+      }
+
+      // If no session found or no sessionId provided, create a new one
+      if (!chatSession) {
+        // Give the session a dynamic title based on the first prompt
+        const sessionTitle = message.length > 30 ? message.substring(0, 30) + '...' : message;
+        chatSession = new Chat({ user: req.user._id, title: sessionTitle, messages: [] });
+      }
+
+      // Push user message
+      chatSession.messages.push({
+        role: 'user',
+        content: message
+      });
+
+      // Push AI response
+      chatSession.messages.push({
+        role: 'assistant',
+        content: responseFormat.answer || JSON.stringify(responseFormat)
+      });
+
+      await chatSession.save();
+      currentSessionId = chatSession._id;
     }
-
-    // Push user message
-    chatSession.messages.push({
-      role: 'user',
-      content: message
-    });
-
-    // Push AI response
-    chatSession.messages.push({
-      role: 'assistant',
-      content: responseFormat.answer || JSON.stringify(responseFormat)
-    });
-
-    await chatSession.save();
 
     res.status(200).json({
       success: true,
       data: responseFormat, // { answer, source, confidence }
+      sessionId: currentSessionId, // Frontend needs this to continue the same chat
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+/**
+ * @desc    Get all chat sessions (threads) for the current user
+ * @route   GET /api/chat/sessions
+ * @access  Private
+ */
+const getChatSessions = async (req, res, next) => {
+  try {
+    // Return all sessions but exclude the bulky 'messages' array for the sidebar
+    const sessions = await Chat.find({ user: req.user._id })
+      .select('title createdAt updatedAt')
+      .sort({ updatedAt: -1 }); // Newest sessions first
+
+    res.status(200).json({
+      success: true,
+      count: sessions.length,
+      data: sessions
     });
   } catch (error) {
     next(error);
@@ -59,22 +97,22 @@ const chat = async (req, res, next) => {
 };
 
 /**
- * @desc    Get chat history for current user
- * @route   GET /api/chat/history
+ * @desc    Get chat history (messages) for a specific session
+ * @route   GET /api/chat/history/:sessionId
  * @access  Private
  */
 const getChatHistory = async (req, res, next) => {
   try {
+    const { sessionId } = req.params;
     const page = parseInt(req.query.page, 10) || 1;
     const limit = parseInt(req.query.limit, 10) || 20;
 
-    const chatSession = await Chat.findOne({ user: req.user._id });
+    const chatSession = await Chat.findOne({ _id: sessionId, user: req.user._id });
 
     if (!chatSession) {
-      return res.status(200).json({
-        success: true,
-        count: 0,
-        data: []
+      return res.status(404).json({
+        success: false,
+        message: 'Chat session not found'
       });
     }
 
@@ -106,5 +144,6 @@ const getChatHistory = async (req, res, next) => {
 
 module.exports = {
   chat,
+  getChatSessions,
   getChatHistory,
 };

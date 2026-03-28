@@ -73,16 +73,23 @@ Content-Type: application/pdf
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ###
-# 7. Get Chat History (Phase 7)
-GET {{baseUrl}}/chat/history?page=1&limit=5
+# 7. Get All Chat Sessions
+GET {{baseUrl}}/chat/sessions
 Authorization: Bearer {{token}}
 
 ###
-# 8. Chat with Simple Explanation Mode (Phase 8)
+# 8. Get Chat History for specific session
+# Replace <SESSION_ID> with the id from the above request
+GET {{baseUrl}}/chat/history/<SESSION_ID>?page=1&limit=5
+Authorization: Bearer {{token}}
+
+###
+# 9. Chat with Simple Explanation Mode and Session Continuation
 POST {{baseUrl}}/chat?mode=simple
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "message": "Explain leasehold to me like I'm 10."
+  "message": "who is allowed to vote in Ghana? explain it to me like i am a five year old.",
+  "sessionId": "replace_with_valid_session_id_if_continuing_chat"
 }

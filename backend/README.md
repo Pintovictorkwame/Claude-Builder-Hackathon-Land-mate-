@@ -62,12 +62,13 @@ All secured endpoints require a standard Bearer Token in the headers:
 
 ### 4. Send Message to AI
 - **Endpoint:** `POST /chat`
-- **Access:** Private (Needs Token)
+- **Access:** Public or Private (Token is optional. If provided, chat is saved to history).
 - **Query Params:** `?mode=legal` (Default) OR `?mode=simple` (Explains it for a 10-year-old).
 - **Body:**
 ```json
 {
-  "message": "Who does land in Ghana belong to?"
+  "message": "Who does land in Ghana belong to?",
+  "sessionId": "optional_session_id_to_continue_chat"
 }
 ```
 - **Response (200):**
@@ -78,12 +79,32 @@ All secured endpoints require a standard Bearer Token in the headers:
     "answer": "All land in Ghana belongs to the people...",
     "source": "Land Act 2020",
     "confidence": "high"
-  }
+  },
+  "sessionId": "64abcd012..."
 }
 ```
 
-### 5. Get User Chat History
-- **Endpoint:** `GET /chat/history`
+### 5. Get All Chat Sessions
+- **Endpoint:** `GET /chat/sessions`
+- **Access:** Private (Needs Token)
+- **Response (200):**
+```json
+{
+  "success": true,
+  "count": 1,
+  "data": [
+    {
+      "_id": "64abcd...",
+      "title": "Who does land in Ghana...",
+      "createdAt": "2026-03-28T14:40:00.000Z",
+      "updatedAt": "2026-03-28T14:40:00.000Z"
+    }
+  ]
+}
+```
+
+### 6. Get Chat History For Specific Session
+- **Endpoint:** `GET /chat/history/:sessionId`
 - **Access:** Private (Needs Token)
 - **Query Params:** `?page=1&limit=20`
 - **Response (200):**
@@ -105,7 +126,7 @@ All secured endpoints require a standard Bearer Token in the headers:
     },
     {
       "role": "assistant",
-      "content": "{\"answer\":\"All land in Ghana belongs to the people...\",\"source\":\"Land Act 2020\",\"confidence\":\"high\"}",
+      "content": "{\"answer\":\"All land in Ghana belongs...\",\"source\":\"Land Act 2020\",\"confidence\":\"high\"}",
       "timestamp": "2026-03-28T14:00:03.000Z"
     }
   ]
@@ -116,7 +137,7 @@ All secured endpoints require a standard Bearer Token in the headers:
 
 ## Optical Character Recognition (OCR)
 
-### 6. Extract Text from PDF/Image
+### 7. Extract Text from PDF/Image
 Extract raw text from an image (JPG/PNG) or document (PDF).
 - **Endpoint:** `POST /ocr/extract`
 - **Access:** Private (Needs Token)
@@ -124,7 +145,7 @@ Extract raw text from an image (JPG/PNG) or document (PDF).
 - **Form Data:** Key must be `file`
 - **Response (200):** `{ "success": true, "text": "Extracted text..." }`
 
-### 7. Analyze Document with AI
+### 8. Analyze Document with AI
 Extract text from a file and immediately feed it to the AI for legal analysis.
 - **Endpoint:** `POST /ocr/analyze`
 - **Access:** Private (Needs Token)
