@@ -1,0 +1,88 @@
+@baseUrl = http://localhost:5000/api
+
+###
+# 1. Register a user (Signup)
+POST {{baseUrl}}/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+###
+# 2. Login user
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+###
+# Extract token from the login response for the next request
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YzdjMTU5NTQxZTA3N2I0YzY3NDFlMiIsImlhdCI6MTc3NDcwNDQxNywiZXhwIjoxNzc1MzA5MjE3fQ.CiuBBSNu9Ftx-GoOTIuvM-TaRhbptTNuxvqMJ-sZT9s
+###
+# 3. Get current user profile (Me)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+###
+# 4. Chat with Claude AI (Phase 2)
+POST {{baseUrl}}/chat
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "message": "Who does land in Ghana belong to?"
+}
+
+###
+# 5. Extract Text from Document (Phase 4)
+# You need a valid file path in the local directory (e.g., sample.pdf)
+POST {{baseUrl}}/ocr/extract
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer {{token}}
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="document"; filename="sample.pdf"
+Content-Type: application/pdf
+
+< ./sample.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+# 6. Analyze Document with Claude (Phase 4)
+# You need a valid file path in the local directory (e.g., sample.pdf)
+POST {{baseUrl}}/ocr/analyze
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Authorization: Bearer {{token}}
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="message"
+
+Can you summarize the main legal points in this document?
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="document"; filename="sample.pdf"
+Content-Type: application/pdf
+
+< ./sample.pdf
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+# 7. Get Chat History (Phase 7)
+GET {{baseUrl}}/chat/history?page=1&limit=5
+Authorization: Bearer {{token}}
+
+###
+# 8. Chat with Simple Explanation Mode (Phase 8)
+POST {{baseUrl}}/chat?mode=simple
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "message": "Explain leasehold to me like I'm 10."
+}
