@@ -55,8 +55,14 @@ const analyzeDocument = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Could not extract text from document.' });
     }
 
+    // Truncate to avoid context window limits on free AI models
+    const MAX_CHARS = 12000;
+    const safeContext = extractedText.length > MAX_CHARS 
+      ? extractedText.substring(0, MAX_CHARS) + '\n\n...[Document Truncated]' 
+      : extractedText;
+
     // 3. Send to OpenRouter using the extracted text as context
-    const responseFormat = await openRouterService.sendMessageToOpenRouter(userMessage, extractedText);
+    const responseFormat = await openRouterService.sendMessageToOpenRouter(userMessage, safeContext);
 
     res.status(200).json({
       success: true,
